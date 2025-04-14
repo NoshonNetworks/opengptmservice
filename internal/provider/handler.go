@@ -4,7 +4,6 @@ import (
 	"log"
 )
 
-
 func NewProviderHandler(inferenceService *inference.InferenceService) *ProviderHandler {
 	return &ProviderHandler{
 		inferenceService: inferenceService,

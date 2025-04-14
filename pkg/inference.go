@@ -4,10 +4,8 @@ import (
 	"log"
 )
 
-
 type Logger struct {
 	Message string
-	
 }
 
 func (l *Logger) Log(message Message) {
