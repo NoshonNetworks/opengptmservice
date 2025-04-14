@@ -1,0 +1,11 @@
+server:
+  port: 8081
+  host: "0.0.0.0"
+
+ollama:
+  base_url: "http://localhost:11434"
+  default_model: "llama3.2:latest"
+
+logging:
+  level: "info"
+  format: "json"
