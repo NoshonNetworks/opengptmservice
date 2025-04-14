@@ -21,7 +21,7 @@ A Go-based inference service that provides a REST API for interacting with local
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/opengptmservice.git
+git clone https://github.com/NoshonNetworks/opengptmservice.git
 cd opengptmservice
 ```
 
