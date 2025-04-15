@@ -8,11 +8,29 @@ import (
 	"log"
 	"net/http"
 	"opengptmservice/pkg/models"
+	"time"
+
+	"go.uber.org/zap"
 )
 
+// OllamaProvider implements the Provider interface for Ollama
 type OllamaProvider struct {
-	BaseURL string
-	Client  *http.Client
+	baseURL      string
+	defaultModel string
+	client       *http.Client
+	log          *zap.Logger
+}
+
+// NewProvider creates a new Ollama provider
+func NewProvider(baseURL, defaultModel string, log *zap.Logger) *OllamaProvider {
+	return &OllamaProvider{
+		baseURL:      baseURL,
+		defaultModel: defaultModel,
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+		log: log,
+	}
 }
 
 type OllamaRequest struct {
@@ -38,13 +56,6 @@ type OllamaChatResponse struct {
 	Message Message `json:"message"`
 }
 
-func NewOllamaProvider(baseURL string) *OllamaProvider {
-	return &OllamaProvider{
-		BaseURL: baseURL,
-		Client:  &http.Client{},
-	}
-}
-
 func (p *OllamaProvider) Generate(prompt string, model string) (string, error) {
 	reqBody := OllamaRequest{
 		Model:  model,
@@ -56,8 +67,8 @@ func (p *OllamaProvider) Generate(prompt string, model string) (string, error) {
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := p.Client.Post(
-		fmt.Sprintf("%s/api/generate", p.BaseURL),
+	resp, err := p.client.Post(
+		fmt.Sprintf("%s/api/generate", p.baseURL),
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -97,8 +108,8 @@ func (p *OllamaProvider) ChatCompletion(request models.ChatRequest) (models.Chat
 		return models.ChatResponse{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := p.Client.Post(
-		fmt.Sprintf("%s/api/chat", p.BaseURL),
+	resp, err := p.client.Post(
+		fmt.Sprintf("%s/api/chat", p.baseURL),
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -125,10 +136,10 @@ func (p *OllamaProvider) ChatCompletion(request models.ChatRequest) (models.Chat
 }
 
 func (p *OllamaProvider) ListModels() ([]string, error) {
-	url := fmt.Sprintf("%s/api/tags", p.BaseURL)
+	url := fmt.Sprintf("%s/api/tags", p.baseURL)
 	log.Printf("Making request to: %s", url)
 
-	resp, err := p.Client.Get(url)
+	resp, err := p.client.Get(url)
 	if err != nil {
 		log.Printf("Error making request: %v", err)
 		return nil, fmt.Errorf("failed to get models: %w", err)
