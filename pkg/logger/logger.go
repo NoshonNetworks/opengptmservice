@@ -5,9 +5,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var log *zap.Logger
+var (
+	// global logger instance
+	log *zap.Logger
+)
 
-func Init(level string, format string) error {
+// NewLogger creates a new logger instance
+func NewLogger(level, format string) *zap.Logger {
 	var config zap.Config
 
 	if format == "json" {
@@ -16,40 +20,38 @@ func Init(level string, format string) error {
 		config = zap.NewDevelopmentConfig()
 	}
 
-	// Set the log level
-	var zapLevel zapcore.Level
-	if err := zapLevel.UnmarshalText([]byte(level)); err != nil {
-		zapLevel = zapcore.InfoLevel
+	// Set log level
+	switch level {
+	case "debug":
+		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	case "info":
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	case "warn":
+		config.Level = zap.NewAtomicLevelAt(zapcore.WarnLevel)
+	case "error":
+		config.Level = zap.NewAtomicLevelAt(zapcore.ErrorLevel)
+	default:
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	}
-	config.Level = zap.NewAtomicLevelAt(zapLevel)
-
-	// Customize the encoder config
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 
 	// Build the logger
 	var err error
 	log, err = config.Build()
 	if err != nil {
-		return err
+		panic("Failed to initialize logger: " + err.Error())
 	}
 
-	// Replace the global logger
-	zap.ReplaceGlobals(log)
-
-	return nil
-}
-
-func Get() *zap.Logger {
-	if log == nil {
-		// Initialize with default values if not initialized
-		_ = Init("info", "json")
-	}
 	return log
 }
 
+// Get returns the global logger instance
+func Get() *zap.Logger {
+	return log
+}
+
+// Sync flushes any buffered log entries
 func Sync() {
 	if log != nil {
-		_ = log.Sync()
+		log.Sync()
 	}
 }

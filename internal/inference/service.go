@@ -4,57 +4,79 @@ import (
 	"time"
 
 	"opengptmservice/pkg/models"
+
+	"go.uber.org/zap"
 )
 
+// Service handles the business logic for inference operations
 type Service struct {
 	provider models.Provider
+	log      *zap.Logger
 }
 
-func NewService(provider models.Provider) *Service {
+// NewService creates a new inference service
+func NewService(provider models.Provider, log *zap.Logger) *Service {
 	return &Service{
 		provider: provider,
+		log:      log,
 	}
 }
 
-func (s *Service) GenerateResponse(prompt string, model string) (models.InferenceResponse, error) {
-	startTime := time.Now()
+// GenerateText generates text using the specified model
+func (s *Service) GenerateText(prompt string, model string) (string, error) {
+	start := time.Now()
+	s.log.Info("Generating text",
+		zap.String("model", model),
+		zap.String("prompt", prompt))
 
-	response, err := s.provider.Generate(prompt, model)
+	result, err := s.provider.Generate(prompt, model)
 	if err != nil {
-		return models.InferenceResponse{}, err
+		s.log.Error("Failed to generate text",
+			zap.Error(err),
+			zap.String("model", model))
+		return "", err
 	}
 
-	return models.InferenceResponse{
-		Response: response,
+	s.log.Info("Text generation completed",
+		zap.String("model", model),
+		zap.Duration("duration", time.Since(start)))
+	return result, nil
+}
+
+// ChatCompletion handles chat completion requests
+func (s *Service) ChatCompletion(messages []models.Message, model string) (models.ChatResponse, error) {
+	start := time.Now()
+	s.log.Info("Processing chat completion",
+		zap.String("model", model),
+		zap.Int("message_count", len(messages)))
+
+	request := models.ChatRequest{
 		Model:    model,
-		Time:     time.Since(startTime).Milliseconds(),
-	}, nil
-}
-
-func (s *Service) ChatCompletion(request models.ChatRequest) (models.ChatResponse, error) {
-	startTime := time.Now()
-
-	// Use default model if none specified
-	if request.Model == "" {
-		request.Model = "llama2" // This should come from config
+		Messages: messages,
 	}
 
-	response, err := s.provider.ChatCompletion(request)
+	result, err := s.provider.ChatCompletion(request)
 	if err != nil {
+		s.log.Error("Failed to process chat completion",
+			zap.Error(err),
+			zap.String("model", model))
 		return models.ChatResponse{}, err
 	}
 
-	// Add timing information to the response
-	// Note: We're not modifying the response structure, but we could add timing info if needed
-	_ = startTime
-
-	return response, nil
+	s.log.Info("Chat completion completed",
+		zap.String("model", model),
+		zap.Duration("duration", time.Since(start)))
+	return result, nil
 }
 
+// ListModels returns a list of available models
 func (s *Service) ListModels() ([]string, error) {
+	s.log.Info("Listing available models")
 	return s.provider.ListModels()
 }
 
+// GetModelInfo returns information about a specific model
 func (s *Service) GetModelInfo(model string) (models.ModelInfo, error) {
+	s.log.Info("Getting model info", zap.String("model", model))
 	return s.provider.GetModelInfo(model)
 }
