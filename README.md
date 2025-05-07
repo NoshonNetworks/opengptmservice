@@ -1,215 +1,102 @@
-# OpenGPTM Service
+# Developer CV Generator
 
-A Go-based inference service that provides a REST API for interacting with local LLM models through Ollama.
+A Go-based web application that generates professional CVs for developers based on their GitHub profile. The application analyzes your repositories, contributions, and technical skills to create a tailored CV.
 
 ## Features
 
-- REST API for model inference and chat completion
-- Support for Ollama provider
-- Model management (listing, info retrieval)
-- Configurable logging
-- Health checks
-- Graceful shutdown
+- GitHub OAuth integration
+- Repository analysis
+- AI-powered CV generation using GPT
+- Markdown CV export
+- Modern, responsive UI
 
 ## Prerequisites
 
 - Go 1.21 or later
-- Ollama (for local model hosting)
+- GitHub OAuth App credentials
+- OpenAI API key
 
-## Installation
+## Setup
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/NoshonNetworks/opengptmservice.git
-cd opengptmservice
+git clone https://github.com/yourusername/developer-cv-generator.git
+cd developer-cv-generator
 ```
 
-2. Install dependencies:
+2. Create a GitHub OAuth App:
 
-```bash
-go mod tidy
-```
+   - Go to GitHub Settings > Developer Settings > OAuth Apps
+   - Create a new OAuth App
+   - Set the callback URL to `http://localhost:8080/auth/github/callback`
+   - Copy the Client ID and Client Secret
 
-3. Install Ollama:
-
-```bash
-# For macOS
-brew install ollama
-
-# For Linux
-curl -fsSL https://ollama.com/install.sh | sh
-```
-
-4. Start Ollama:
-
-```bash
-# Start Ollama in a separate terminal
-ollama serve
-```
-
-5. Pull a model:
-
-```bash
-# Pull the model you want to use (e.g., llama3.2)
-ollama pull llama3.2
-```
-
-## Configuration
-
-The service can be configured using the `config/config.yaml` file. Here's the default configuration:
+3. Create a `config.yaml` file in the project root:
 
 ```yaml
 server:
-  port: 8081
-  host: "0.0.0.0"
+  port: 8080
 
-ollama:
-  base_url: "http://localhost:11434"
-  default_model: "llama3.2:latest"
+github:
+  client_id: "your_github_client_id"
+  client_secret: "your_github_client_secret"
+  redirect_url: "http://localhost:8080/auth/github/callback"
 
-logging:
-  level: "info"
-  format: "json"
+openai:
+  api_key: "your_openai_api_key"
+  model: "gpt-3.5-turbo"
 ```
 
-## Running the Service
-
-1. Make sure Ollama is running:
+4. Install dependencies:
 
 ```bash
-# In a separate terminal
-ollama serve
+go mod download
 ```
 
-2. Start the inference service:
+5. Run the application:
 
 ```bash
-go run cmd/inference/main.go
+go run cmd/server/main.go
 ```
 
-The service will start on the configured port (default: 8081).
+The application will be available at `http://localhost:8080`.
 
-## API Endpoints
+## Usage
 
-### Health Check
+1. Visit `http://localhost:8080`
+2. Click "Login with GitHub"
+3. Authorize the application
+4. Wait for the CV generation
+5. Download your CV in Markdown format
 
-```bash
-curl http://localhost:8081/health
+## Project Structure
+
+```
+.
+├── cmd/
+│   └── server/
+│       └── main.go
+├── internal/
+│   ├── auth/
+│   │   └── github.go
+│   ├── github/
+│   │   └── repo.go
+│   └── gpt/
+│       └── cv.go
+├── web/
+│   ├── static/
+│   └── templates/
+│       └── index.html
+├── config.yaml
+├── go.mod
+└── README.md
 ```
 
-Response:
+## Contributing
 
-```json
-{ "status": "ok" }
-```
-
-### List Available Models
-
-```bash
-curl http://localhost:8081/models
-```
-
-Response:
-
-```json
-{ "models": ["llama3.2:latest"] }
-```
-
-### Get Model Info
-
-```bash
-curl http://localhost:8081/models/llama3.2:latest
-```
-
-### Text Generation
-
-```bash
-curl -X POST http://localhost:8081/inference \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello, how are you?", "model": "llama3.2:latest"}'
-```
-
-### Chat Completion
-
-```bash
-curl -X POST http://localhost:8081/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "llama3.2:latest",
-    "messages": [
-      {"role": "system", "content": "You are a helpful assistant."},
-      {"role": "user", "content": "Hello, how are you?"}
-    ]
-  }'
-```
-
-## Troubleshooting
-
-### Port Conflicts
-
-If you encounter port conflicts:
-
-1. Check which process is using the port:
-
-```bash
-lsof -i :8081  # For inference service
-lsof -i :11434 # For Ollama
-```
-
-2. Stop the conflicting process or update the port in `config/config.yaml`
-
-### Ollama Not Found
-
-If `ollama` command is not found:
-
-1. Verify Ollama installation:
-
-```bash
-which ollama
-```
-
-2. Add Ollama to your PATH if not found
-3. Restart your terminal
-
-### Model Not Found
-
-If you get 404 errors for model requests:
-
-1. Verify the model is available:
-
-```bash
-curl http://localhost:8081/models
-```
-
-2. Pull the model if not available:
-
-```bash
-ollama pull llama3.2
-```
-
-## Development
-
-### Running Tests
-
-```bash
-go test ./...
-```
-
-### Building
-
-```bash
-go build -o opengptmservice cmd/inference/main.go
-```
-
-### Adding New Providers
-
-To add a new provider:
-
-1. Create a new package under `internal/providers/`
-2. Implement the `models.Provider` interface
-3. Update the main.go file to use your new provider
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License
+This project is licensed under the MIT License - see the LICENSE file for details.

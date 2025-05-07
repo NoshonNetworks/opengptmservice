@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+github:
+  client_id: 
+  client_secret: 
+  redirect_url: "http://localhost:8080/auth/github/callback"
+
+atoma:
+  api_key: 
+  model: mistralai/Mistral-Nemo-Instruct-2407
