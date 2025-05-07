@@ -44,8 +44,8 @@ github:
   redirect_url: "http://localhost:8080/auth/github/callback"
 
 openai:
-  api_key: "your_openai_api_key"
-  model: "gpt-3.5-turbo"
+  api_key: Atoma Bearer Auth
+  model: model-name
 ```
 
 4. Install dependencies:
